@@ -1,0 +1,1432 @@
+#####################################
+#########DOCKER#####COMMANDS#########
+#####################################
+
+
+# Run docker image
+docker run nginx
+
+# Pull/Download image
+docker pull mysql
+
+# Stop container
+docker stop container-id
+ 
+# List processes
+docker ps 
+docker ps -a
+
+# Interactive Terminal mode (it) 
+# (i)Keep STDIN open even if not attached 
+# (t) Allocate a pseudo-TTY
+docker run -it mysql 
+
+# Mapping external volume
+docker run -v /opt/datadir:/var/lib/mysql mysql
+
+# Run docker image with environment variable
+docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=password -d mysql
+
+# Run container and execute command when exit container
+docker run ubuntu cat /etc/*release*
+
+# Attach to running container
+docker attach container-id
+
+# Docker Run with Volume and Port Forwarding
+docker run -p 8080:8080 -p 50000:50000 --restart=on-failure -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk11
+
+How To Remove Docker Images, Containers, and Volumes
+-------------------------------------------------------
+Purging All Unused or Dangling Images, Containers, Volumes, and Networks
+clean up any resources — images, containers, volumes, and networks — that are dangling (not tagged or associated with a container):
+> docker system prune
+
+To additionally remove any stopped containers and all unused images (not just dangling images), add the -a flag to the command:
+> docker system prune -a
+
+Removing Docker Images
+> docker rmi Image Image
+
+Remove dangling images
+Docker images consist of multiple layers. Dangling images are layers that have no relationship to any tagged images. They no longer serve a purpose and consume disk space. They can be located by adding the filter flag -f with a value of dangling=true to the docker images command. 
+LIST:
+> docker images -f dangling=true
+REMOVE:
+> docker image prune
+
+Removing images according to a pattern
+LIST:
+> docker images -a |  grep "pattern"
+REMOVE:
+> docker images -a | grep "pattern" | awk '{print $3}' | xargs docker rmi
+
+Remove all images
+LIST:
+> docker images -a
+REMOVE:
+add the -q flag to pass the image ID to docker rmi
+> docker rmi $(docker images -a -q)
+
+Removing Containers
+> docker rm ID_or_Name ID_or_Name
+
+Remove a container upon exiting
+> docker run --rm image_name
+
+Remove all exited containers
+You can locate containers using docker ps -a and filter them by their status: created, restarting, running, paused, or exited. To review the list of exited containers, use the -f flag to filter based on status. When you’ve verified you want to remove those containers, use -q to pass the IDs to the docker rm command:
+List:
+>docker ps -a -f status=exited
+Remove:
+>docker rm $(docker ps -a -f status=exited -q)
+
+Remove containers using more than one filter
+List:
+> docker ps -a -f status=exited -f status=created
+Remove:
+> docker rm $(docker ps -a -f status=exited -f status=created -q)
+
+Remove containers according to a pattern
+You can find all the containers that match a pattern using a combination of docker ps and grep. When you’re satisfied that you have the list you want to delete, you can use awk and xargs to supply the ID to docker rm.
+List:
+> docker ps -a |  grep "pattern”
+Remove:
+> docker ps -a | grep "pattern" | awk '{print $1}' | xargs docker rm
+
+Stop and remove all containers
+> docker stop $(docker ps -a -q)
+> docker rm $(docker ps -a -q)
+
+Removing Volumes
+List:
+> docker volume ls
+Remove:
+> docker volume rm volume_name volume_name
+
+Remove dangling volumes - Docker 1.9 and later
+Since the point of volumes is to exist independent from containers, when a container is removed, a volume is not automatically removed at the same time. When a volume exists and is no longer connected to any containers, it’s called a dangling volume. To locate them to confirm you want to remove them, you can use the docker volume ls command with a filter to limit the results to dangling volumes. When you’re satisfied with the list, you can remove them all with docker volume prune:
+List:
+> docker volume ls -f dangling=true
+Remove:
+> docker volume prune
+
+Remove a container and its volume
+If you created an unnamed volume, it can be deleted at the same time as the container with the -v flag. Note that this only works with unnamed volumes. When the container is successfully removed, its ID is displayed. Note that no reference is made to the removal of the volume. If it is unnamed, it is silently removed from the system. If it is named, it silently stays present.
+Remove:
+> docker rm -v container_name
+### https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes
+
+-------------------------------------------------------
+
+# Docker inpspect to view docker container properties
+docker inspect cotanier-id/name
+
+# Override entrypoint 
+docker run --entrypoint sleep2.0 ubuntu-sleeper 10
+
+# Docker run name the container
+docker run -d --name=redis redis
+docker run -d -e POSTGRES_PASSWORD=password -e POSTGRES_HOST_AUTH_METHOD=trust --name=db postgres
+docker run -d --name=vote -p 5000:80 --link redis:redis voting-app
+docker run -d --name=result -p 5001:80 --link db:db result-app
+docker run -d --name=worker --link redis:redis --link db:db worker
+
+# docker run --links to link two container via a command line
+
+# Setting up docker private registry
+https://github.com/rchidana/Docker-Private-Registry/
+sudo docker run -d -p 5000:5000 --restart=always --name registry   -v /certificates:/certificates   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certificates/domain.crt   -e REGISTRY_HTTP_TLS_KEY=/certificates/domain.key   registry:2
+
+# Docker file build by filename
+docker build . -f Dockerfile2 -t tagName
+
+#Docker image disk consumption by Images, Containers, Local Volumes, Build Cache.
+root@MSI:/var/lib/docker# docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          4         0         563.8MB   563.8MB (100%)
+Containers      0         0         0B        0B
+Local Volumes   0         0         0B        0B
+Build Cache     0         0         0B        0B
+
+#To view all the images and space consumption use -v flag.
+root@MSI:/var/lib/docker# docker system df -v
+Images space usage:
+
+REPOSITORY         TAG       IMAGE ID       CREATED          SIZE      SHARED SIZE   UNIQUE SIZE   CONTAINERS
+my-color-webapp    latest    39b2b5a6cccb   14 minutes ago   563.8MB   563.8MB       308B          0
+my-simple-webapp   latest    2cc63189dffc   4 hours ago      563.8MB   563.8MB       254B          0
+ubuntu             latest    6b7dfa7e8fdb   8 days ago       77.8MB    77.8MB        0B            0
+hello-world        latest    feb5d9fea6a5   14 months ago    13.26kB   0B            13.26kB       0
+
+Containers space usage:
+
+CONTAINER ID   IMAGE     COMMAND   LOCAL VOLUMES   SIZE      CREATED   STATUS    NAMES
+
+Local Volumes space usage:
+
+VOLUME NAME   LINKS     SIZE
+
+Build cache usage: 0B
+
+CACHE ID   CACHE TYPE   SIZE      CREATED   LAST USED   USAGE     SHARED
+
+
+## Docker orchestration
+docker service create --replicas=100 nodejs
+
+###Extra Stuff####
+https://rethinkdb.com/
+https://github.com/notaryproject/notary
+
+
+### DOCKER NETWORKING ####
+## Port Mapping Networking
+# Exposing the port inside the container to the host. All the traffic from host will be ridirected to the container.
+> docker run -d -p 80:80 web-server 
+
+## Bridge Networking
+# When container is lunched it attaches itself to docker bridge and uses that bridge to get IP addresses and all the
+# traffic go via the bridge to the outside world  by ethernet 0 i.e. eth0. 
+# Use the links or the docker networks in order to have containers talking to each other, on that bridge network.
+>docker run -it -name server web-server
+>docker run -it -link server:server client
+
+## Host Networking
+# Define the network of the host at the container launch time.This maps the network from the host OS into the container.
+# It can do anything with host network, open any network port or bind to any IP Address. Still can access localhost port 80  
+# eventhough not mapped explicity bcs internally container has that access. 
+>docker run -it --net=host server
+
+## Overlay Networking
+# Overlay network is basically the way that two containers on two different machines can talk to each other and different 
+# apporaches in different ways. Docker did it with consul for service discovery and then use its VXLAN without any encryption
+# for container to container multi host networking.
+>
+
+[very important]
+The Brutally Honest Guide to Docker Graphdrivers
+https://blog.jessfraz.com/post/the-brutally-honest-guide-to-docker-graphdrivers/
+
+
+To use the AUFS storage driver with Docker, you will need to install the appropriate kernel modules on your system. On Ubuntu, you can do this by running the following command:
+> sudo apt-get install linux-image-extra-$(uname -r) linux-image-extra-virtual
+Once the kernel modules are installed, you can start the Docker daemon with the --storage-driver flag set to aufs, like this:
+
+> sudo dockerd --storage-driver=aufs
+Please note that, again, this is not recommended as AUFS has known performance and reliability issues and it is recommended to use the overlay2 storage driver instead.
+
+You can also remove the package that you installed to enable the AUFS storage driver by running the following command:
+> sudo apt-get remove linux-image-extra-$(uname -r)
+
+usefull linux commands
+> docker stats
+> uptime
+> free -m
+> df -h
+> cat /proc/cpuinfo
+> reboot
+> shutdown now
+> while :; do echo 'Hello World'; done
+> fallocate
+> truncate
+> dd
+
+Restrictions 
+Cgroups
+	How much resource container can use. CPU, Memory, DISK I/O
+Namespaces
+	Namespaces limit, what the container can see. So when we are using the host network name space, 
+	it could see more because it was in the host network name space, when we used shared 
+	networking namespace, it could see and interact with the other container because 
+	they shared the same interface. 
+	And this is how when you're in a container and do PS and lists all the processes. 
+	It doesn't lift anything because they're in separate namespaces. 
+	And so, this is the Linux kernel protecting and isolating stuff.
+Capabilities
+	capabilities are given this process, what am I allowed to do? How much restrictions, or how much access 
+	do I have? And for Can I mount file systems? Can I create new devices, can install 
+	kernel drivers and stuff like this.
+Seccomp
+	basically limiting what a container can call at a system core level.
+AppArmor
+	It's like a profile and you can you define that. You've got nginx and this is what nginx, 
+	which hasn't been exploited, its normal behavior should or shouldn't be allowed to do.
+	
+And so, these are restrictions which we have in place and on top of this Docker, have 
+added additional functionality, 
+
+This will take CPU utilization sky rocket.
+> :(){ :|: &};:
+1- 	defining a function called colon :
+2- 	content of function is to call itself and then pipe the result of itself to itself. 
+	And then release control &. { :|: &};
+3- 	At the end execute it self.
+
+	To avoid this in docker there is --pids-limit option. It protects resources 
+	and system from extra process executions.
+
+Cgroup Settings
+-Limit a container to a share of the resources
+	How much a container should have 10% 50% of what else is available. what CPUs should be 
+	this container be allowed to run on. if you are concerned that a container, maybe a 
+	hundred percent and utilizing maximum, it doesn't interfere with other things happening. 
+	So you can spread and allocate different containers to different CPUs. 
+	And so we are only will have max out one or two of  CPUs on a 32 box core, 
+	it just restric them. 
+	Same for memory it's just limiting so you can only use one gig of an available 160.
+	Block I/O and block performance levels and so this all helps you strict 
+	and limit what contain container can and cannot do. And how much impact it can have another thing for running on the system and there's a lot of other security settings as well.
+	> --cpu-shares
+	> --cpuset--cpus
+	> --memory-reserveation
+	> --kernet-memory
+	> --blkio-weight (block IO)
+	> --device-read-iops
+	> --device-write-iops
+
+SECCOMP
+This is basically a way to list which system calls are allowed or not allowed to execute.
+In linux all applications interact with kernal via System calls.
+> strace outputs all calls
+
+Docker Capabilities and no-new-privileges
+docker run -it -u $(id -u) --security-opt no-new-privileges -v `pwd`:/exploit ubuntu bash
+https://raesene.github.io/blog/2019/06/01/docker-capabilities-and-no-new-privs/
+> --security-opt=no-new-privlileges this prevents the exploit from executing.
+> docker run -it -u $(id -u) --security-opt no-new-privlileges -v `pwd`:/exploit ubuntu bash
+
+##To count number of packages in linux
+> dpkg -l | wc -l
+
+# List last run docker process
+> docker ps -l
+CONTAINER ID   IMAGE            COMMAND                  CREATED          STATUS          PORTS     NAMES
+89d71fe62ae9   jpetazzo/clock   "/bin/sh -c 'while d…"   15 seconds ago   Up 14 seconds             youthful_villani
+
+# Short fomr of docker processes
+> docker ps -q
+89d71fe62ae9
+2591cb1dd248
+24731652b6db
+
+# Last Docker process started.
+> docker ps -ql
+89d71fe62ae9
+
+# Docker logs tail last 3 lines
+> docker logs --tail 3 068
+
+# Docker logs for last docker container 
+> docker logs $(docker ps -ql)
+
+# Docker logs for last docker container 
+>docker logs $(docker ps -ql)
+
+# Follow logs runtime
+> docker logs --tail 10 --follow $(docker ps -ql)
+
+# docker Stop and docker kill . If after 10 sec of docker stop container is still runnning 
+# than it will send kill signal to exit the container forcefully.
+
+#Process tree
+> ps faux
+
+# Detaching from container use ^P^Q in sequence. Otherwise ^C will detach and kill the terminal.
+# -t means "allocate me a terminal"
+# -i means "connect stdin to the terminal"
+# REPL Read Eval Print loop. When attaching to REPL container the shell doesnot know what you just
+# attached so ENTR or ^L will print the shell.
+
+# Docker search registry online
+docker search zookeeper
+
+# Creating docker file from exsiting run instance.
+> docker commit image-id image-tag-name 
+
+# Creating tag of an image if not provided proper tag name.
+> docker tag 105e8294a29b ubu-figlet
+
+# Finding difference between the container base image and the current state of the container.
+> docker diff contaier-id
+
+# First statement in Dockerfile should be FROM i.e. base image.
+# MAINTAINER goes into the metadata instruction about who is creating image.
+# The RUN instruction can be specified in two ways
+# 1: with shell wrapping, which runs the specified command inside a shell, with /bin/sh -c:
+> RUN apt-get update
+# 2: Using the exec method, which avoud shell string expansion and allows execution in images that  
+# dont have /bin/sh:
+> RUN [ "apt-get", "update" ]
+# RUN will don the following:
+## Execute a command
+## Record changes to the filesystem.
+## Work great to install libraries, packages and various files.
+# RUN will not do the following
+## Records state of processes
+## Automatically start daemons
+## To start automaticallywhen the container runs, use CMD or ENTRYPOINT.
+# Collapsing Layers
+## It is possible to execute multiple commands in a single step:
+> RUN apt-get update && apt-get install -y wget && apt-get clean
+## It is also possible to break commands into multiple lines:
+> RUN apt-get update \
+	&& apt-get install -y wget \
+	&& apt-get clean
+## This will avoid creation of multiple layers.
+# The EXPOSE Instruction
+## The EXPOSE instruction tells Docker what ports are to be published in this image.
+> EXPOSE 8080
+> EXPOSE 80 443
+> EXPOSE 53/tcp 53/udp
+## All ports are private by defualt
+## The Dockerfile doesn't control if a port is publicly available
+## When doing docker run -p <port> .... that port becomes public. Even not declared in EXPOSE
+## When doing docker run -P without port number, all ports with EXPOSE become public.
+## A public port is reachable from other containers and from outside the host
+## A private port is not reachable from outside.
+# The COPY instruction
+## The COPY instruction adds file and contents from host to the image
+> COPY . /src
+## This will add the contents of the build context i.e. the directory passed as an argument
+## To the directory /src in the container
+## Only references to the files and directories inside the build context are valid.
+## Following two lines are equivalent:
+> COPY . /src
+> COPY / /src
+## Attempts to use out of the build context will be detected and blocked with Docker and build will fail.
+> COPY / /src/
+## This will copy recursively all files and folders in src/ 
+
+# ADD
+## ADD work almost like COPY 
+## ADD can get remote files
+> ADD http://www.example.com/webapp.jar /opt/
+## ADD will automatically unpack zip files and tar archives:
+> ADD ./assets.zip /var/www/htdocs/assets/
+## Add will not automatically unpack remote archives.
+# VOLUME
+## The VOLUME instruction tells Docker that a specific directory should be a volume.
+> VOLUME /var/lib/mysql
+## Filesystem access in volumes bypasses the copy-on-write layer, offering native performance to 
+## I/O done in those direcories.
+## Volumes can be attached to multiple containers allowing to "port" data over from a container
+## to another, e.g. to upgrade a database to newer version.
+## It is posssible to start a container in "read-only" mode. The container filesystem will be made 
+## read-only. but volumes can still have read/write access if necessary.
+# The WORKDIR instruction
+## The WORKDIR instruction sets the wokring directory for subsequent instruction
+## It also effects CMD and ENTRYPOINT, since it sets the working directory used when 
+## starting the container.
+> WORKDIR /src
+## Can also specify WORKDIR again to change the working directory for further operations.
+# The ENV instruction
+## The ENV instruction specifies environment variables that should be set in any container launched
+## from the image.
+> ENV WEBAPP_PORT 8080
+## This will result in an environment variables being created in any container created 
+## from this image 
+> WEBAPP_PORT=8080
+## Can also specify environment variables when using docker run
+> docker run -e WEBAPP_PORT=8080 -e WEBAPP_HOST=www.example.com ...
+# The USER instruction
+## The USER instruction sets the user name or UID to use when running the image.
+## It can be used multiple time to change back to root or to another user.
+# The CMD instruction
+## The CMD instruction is a default command run when a container is launched from the image.
+## RUN and CMD instruction comes in tow forms.
+## This executes in a shell 
+> CMD nginx -g "deamon off;"
+## The second one executes without shell processing:
+> CMD ["nginx", "-g", "daemon-off;"]
+# The ENTRYPOINT instruction
+## The ENTRYPOINT instruction is like the CMD instruction. But arguments given on the command line 
+## are appended to the entry point.
+## This runs "exec" "COMMAND"
+> ENTRYPOINT ["/bin/ls"]
+## So if we run docker now.
+> docker run training/ls -l
+## IT will run /bin/ls -l
+# CMD and ENTRYPOINT interact
+> ENTRYPOINT [ "nginx" ]
+> CMD ["-g", "daemon off;"]
+## The ENTRYPOINT specifies the command to be run and the CMD specifies its options.
+## On the command line we can then potentially override the options when needed.
+> docker run -d <dockerhubUsername>/web-image -t
+## This will override the options CMD provded with new flags.
+
+# Docker Inspect
+> docker inspect ticktock | less
+# Give Container running status True or False
+> docker inspect --format '{{.State.Running}}' ticktock
+
+# A simple, static web-server
+> docker run -d -P nginx
+## -d tells Docker to run image in background
+## -P tells Docker to make this service reachable from other Computers. -P is short-version of --publish-all
+> docker ps -a 
+CONTAINER ID   IMAGE             COMMAND                  PORTS                                  
+7987bb3c5c24   nginx             "/docker-entrypoint.…"   0.0.0.0:49153->80/tcp, :::49153->80/tcp
+## 0.0.0.0:49153->80/tcp, :::49153->80/tcp means web server is running on port 80 inside container
+## That ports is mapped to port 49153 on Docker host
+## Manual allocation of port numbers
+> docker run -d -p 80:80 nginx
+> docker run -d -p 8000:80 nginx
+> docker run -d -p 8080:80 -p 8888:80 nginx
+## The convention is port-on-host:port-on-container
+
+# How to connect containers to the rest of the infrastructure
+## There are at least three ways to integrate containers in your network
+## Start the container and let docker allocate a public port for it. 
+## And then take that port and use in other system configuration like load balancer etc.
+## OR pick a fixed port in advance by setting docker run -p
+## OR use network plugin, connecting all the containers like VLAN
+
+# Network Drivers
+## bridge i.e default
+## none
+## host
+## container
+## The driver is selected with docker run --net .....
+
+# The default bridge
+## By default the container gets a virtual eth0 interface. In addition to its own private lo
+## loopback interface.
+## That interace is provided by a veth pair.
+## It is connected to the Docker bridge (Named docker0 by default; configrable with --bridge)
+## Addresses are allocated on a private internal subnet.(Docker uses 172.17.0.0/16 by default)
+## configurable with --bip.
+
+# The null driver
+## conatiner is started with docker run --net none ...
+## it only get lo loopback interface. No eth0.
+## it can't send or receive network traffic.
+## Useful for isolated/untrusted workloads.
+
+# The host driver
+## Container is started with docker run --net host ...
+## It sees and can access the network interfaces of the host.
+## It can bind to any address, any port .
+## Network traffic doesn't have to go through NAT, bridge or veth.
+## Performance = Native!
+## docker run -ti --net host alpine sh
+## This container has the same network environment as the host.
+
+# The container driver
+## Container is started with docker run --net container:id ...
+## It re-uses the network stack of anthoer container
+## It shares with this other container the same interface, 
+## IP address(es), routes, iptables rules, etc.
+## Those containers can communicate over their lo intreface i.e. one can bind to 127.0.0.1
+## and the others can connect to it.
+> docker run -d --name mynginx nginx
+> docker run --net container:mynginx -ti alpine sh
+## This tells something is running on port 80
+> netstat -ntl
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN
+tcp        0      0 :::80                   :::*                    LISTEN
+> apk add --update curl
+# This gives nginx page.
+> curl localhost
+
+# The Container Network Model
+## The CNM adds the notion of a network, add a new top-level command to manipulate
+## and see those networks: docker network
+> docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+7c69e7f4b7df   bridge    bridge    local
+63c5e55fe342   host      host      local
+cbfc6fa20966   none      null      local
+## Conceptually, a network is a virtual switch.
+## It can be local(to a single Engine) or global(across multiple hosts).
+## A network has an IP subnet associated to it.
+## A network is managed by a driver
+## A network can have custom IPAM i.e. IP allocator
+## All the drivers are available here.
+## A new multi-host driver, overlay, is available out of the box.
+## More drives can be provided by plugins(OVS, VLAN...)
+## Creating a network named dev
+> docker network create dev
+## Placing container on a network
+> docker run --net dev -d --name search bitnami/elasticsearch
+> docker run --net dev -ti alpine sh
+> curl search:9200
+> ^P^Q
+> docker network create prod
+> docker run --net prod --net-alias search -d bitnami/elasticsearch
+> docker run --net prod -ti alpine sh
+> apk add --update curl
+
+# Connecting multiple container together
+## Run an application that requires two containers
+## web-server and redis data store
+## on dev network
+> docker run --net dev -d -P jpetazzo/trainingwheels
+> docker run --net dev --name redis -d redis
+## To run multiple copies of application since name are unique so use --net-alias to define 
+## network-scoped aliases, independently of the container name.
+> docker rm -f redis
+> docker run --net dev --net-alias redis -d redis
+
+# Overlay networks
+## All features so far are available on single host for containers on multiple hosts overlay 
+## network is used to connect them.
+## Docker ships with default network plugin, overlay, implementing an overlay network leverging
+## VXLAN and a key/value store.
+## other plugins (Weave, Calico...) can provide overlay networks as well.
+## Links were introduced before overlay networks
+## Links are created between two containers
+## Links are create from client to the server.
+## Links associate an arbitrary name to an existing container
+## Links exist only in the context of client
+> docker run --link datastore:redis alpin env
+## Links also give an access of the environment of the server.
+## First we create the server i.e. redis then create the client i.e. web-server. And that client
+## can access all the environment variables of the server.
+
+# Differences between networks aliases and links
+## With network aliases you can staret container in any order
+## With links, you have to start the server first.
+
+## with network aliases, you cannot change the name of the server once it is running.if you
+## want to add a name, you have to create a new container.
+## with links, you can give new names to an existing container
+
+## Network aliases require the use of a customs network.
+## Links can be used on the default bridge network.
+
+## Network aliases work across multi-host networking.
+## Links only work with local containers.(But might change in future).
+
+## Network aliases don't populate environemt variables.
+## Links give access to the environment of the target container.
+
+docker run -d -P jpetazzo/namer:master
+## source code...
+> git clone git://github.com/jeptazzo/namer
+
+# Volume
+## Tells docker to map the current directory to /src in the container
+> docker run -d -v $(pwd):/src -p 80:9292 jpetazzo/namer:master
+## docker -d flag indicates that the container should run in detached mode in the background.
+## the -v flag provides volume mounting inside containers.
+## the -p flag maps port 9292 inside the container to port 80 on the host
+## jpetazzo/namer is the name of the image we will run
+
+# Mounting volumes inside containers.
+## the -v flag mounts a directory from your host into your Docker container.
+> [host-path]:[container-path]:[rw][ro]
+## if [host-path] or [container-path] doesn't exist it is created.
+## write status of the volume is controlled wihthe ro and rw options.
+## by default it is rw.
+## The main point of volume is to create a direct mapping between a directory on the host
+## and directory in the container.
+## This can be used to achieve native IO performance. 
+## Bcs when container is reading writing on the volume is directly r/w from the host without
+## any overhead.
+## Bypassing copy-on-write to leave some files out of docker commit.
+## Use that to share between host and the container. and share between multiple containers.
+## Volumes are special directories in a container.
+## Declared in two different ways. 
+## Dockerfile with VOLUME /var/lib/postgressql
+## On command line with -v flag 
+> docker run -d -v /var/lib/postgressql training/postgressql
+## In both cases /var/lib/postgressql, inside the container will be a volume.
+## To list all volumes
+> docker volume ls
+> docker volume --create myVolume
+> docker run -ti -v myVolume:/volume alpine sh
+> docker run -ti -v myVolume:/something ubuntu
+## To view the volume, what is it having...
+> docker run -ti -v 46bac33675727dfb3c55b57715d6bdd2874003c54:/whatisthis ubuntu
+
+# List all the running containers ID
+> docker ps -q
+# Kill all the running dockers
+> docker ps -q | xargs docker kill
+
+# Start the redis container
+> docker run --name red28 -d redis:2.8
+# This is alpine container running in same network stack as redis network.
+> docker run --net container:red28 -ti alpine sh
+> apk add busybox-extras
+# Connect to the redis server on localhost
+> telnet localhost 6379
+> INFO SERVER
+> SET PLACE DXB
+> SAVE
+> QUIT
+> docker stop red28
+# Reusing red28 volume on new redis container of other version.
+> docker run --volumes-from red28 -d --name red30 redis:3.0
+> docker run --net container:red30 -ti alpine sh
+
+# Sharing a single file between the host and a container
+## The same -v flag is used
+## one intersting example is to share the Docker control socket.
+> docker run -it -v  /var/run/docker.sock:/var/run/docker.sock docker sh
+## So we are sharing the docker host docker.sock file with the container. 
+## When using such mounts, the container gains root-like access to the host.
+## ls -l /var/run/
+## Docker uses a unix socket to communicate from client to the docker engine. And uses
+## this socket for handshake.
+
+# What happens when container with volumes is removed?
+## When a Docker container with volumes is removed, the data stored in the volumes is not removed 
+## along with the container. The data in the volumes will persist and can be accessed by other 
+## containers or the host system. If you wish to remove the data in the volumes along with the 
+## container, you can use the --rm or --volumes option with the docker rm command.
+# How to know which volume is without container?
+## You can use the docker volume ls command to list all the volumes on your host system, 
+## including those that are not currently in use by any containers. The output will show the 
+## volume names and other information such as the driver used, the mount point and the status. 
+## You can also use the docker volume inspect command followed by a volume name to see more 
+## detailed information about a specific volume.
+## Another alternative is using the docker ps -a command, it will show all the container even 
+## if they are not running, you can cross check the container with the volume list and identify 
+## the volumes without a container.
+## You can use the docker volume ls command to list all the volumes on the host system. 
+## Volumes that are not currently in use by any container will have "local" listed under 
+## the "DRIVER" column.
+## You can also use docker volume ls -f dangling=true command to list the volumes that 
+## are not associated with any container.
+## Additionally, you can use docker ps -a to list all the containers and check the volume column, 
+## if it's empty the volume is not associated with any container.
+## If you want to see the mapping between the volumes and the containers, you can use docker 
+## container inspect command and check the "Mounts" section, it will show you the volumes 
+## that are associated with that container.
+
+# List all the docker instances running and not running.
+> docker ps -qa
+> docker ps -qa | xargs docker rm -f 
+## All the volumes are there even we have deleted all the containers.
+> docker volume ls
+> 
+
+> sudo systemctl status docker
+
+As two general rules, you shouldn't install software inside running containers 
+(it will get lost as soon as your container exits), and commands like systemctl just 
+don't work inside Docker. You might think of Docker as a way to package an application 
+and not like a full-blown VM with an init system and users and processes
+
+#Docker Images
+## GIT REPO
+> docker build https://github.com/cerulean-canvas/nginx.git -t nginx-git
+## pipe the docker file to docker build command.
+> docker build - < Dockerfile -t nginx-stin
+## Compressing BuildContext
+> tar -zcvf nginx.tar.gz Dockerfile
+## docker build - < https://abc.com/sample.tar.gz This will build the docker image from remote tar.
+> docker build - < nginx.tar.gz -t nginx-tarball
+## This is useful when image build is required for CI/CD pipeline or build the images in bulk
+## hosting registry as a service.
+## If tar is having more than one Dockerfile, its best to unzip it.
+> tar -tf nginx.tar.gz 
+## Build KIT, by default it is disabled. It can be enabled in /etc/docker/docker.json file.
+## { "features" : { "buildkit" : true}}
+> DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache -t nginx-buildkit .
+
+# Multi Stage Build
+## multi stage build allow more than on FROM statement with each one labelled as STAGE.
+
+# Search 
+> docker search --filter is-official=true mysql
+> docker search --limit 7 mysql
+> docker search --format "table {{.Name}}\t{{.Description}}\t{{.IsOfficial}}" --limit 10 --no-trunc mysql
+
+
+# Registry
+> docker run -d --name registry -p 5000:5000 --restart=always registry
+> docker pull busybox
+> docker tag busybox:latest localhost:5000/my-busybox
+> docker push localhost:5000/my-busybox
+> docker rmi localhost:5000/my-busybox
+> docker pull localhost:5000/my-busybox
+
+# Docker File
+## Starts with the bootfs (Boot File System) are used to store boot loaders i.e. the scripts
+## that starts the system. This is where the container isolation begins. The bootfs provides
+## isolated and reserves resource allocations. Which virtually separates the image from rest
+## of the files on the host or on cloud. 
+## On top of that we have Base Image layer which is generally specified by the Dockerfile authors.
+## Next we have standard layers RUN, WORKDIR, ENV, EXPOSE, CMD etc. These layers are stored as 
+## intermediate images. These intermediate images are read-only and have there own image id. 
+## Intermediate Image layers are used for caching. To make caching simple we have intermediate 
+## images where each layer has its own significant identity and it separates itself from all
+## other layers interm of use-ability. But intermediate images cannot be used on there own. 
+## Since they wouldn't be suffcient to run a container or process by themself. Bcs even the small
+## image would consist of one CMD or ENTERYPOINT layer, which is not present in any simple ADD 
+## COPY image.
+
+> docker history registry:latest
+IMAGE          CREATED        CREATED BY                                      SIZE      COMMENT
+81c944c2288b   3 months ago   /bin/sh -c #(nop)  CMD ["/etc/docker/registr…   0B        
+<missing>      3 months ago   /bin/sh -c #(nop)  ENTRYPOINT ["/entrypoint.…   0B        
+<missing>      3 months ago   /bin/sh -c #(nop) COPY file:507caa54f88c1f38…   155B      
+## nop mean no operation; It means the files or configuration we have added or removed do not 
+## perform any computation on them. They don't create any child process from there operations.
+> docker history registry:latest --no-trunc
+> docker history --format "table {{.ID}}\t{{.CreatedBy}}" registry:latest
+
+# Docker TAR file
+> docker save --output busybox-save.tar busybox-save:latest
+> git clone https://github.com/cerulean-canvas/docker-save-example.git
+> docker load --input busybox-save.tar
+
+# Docker Container Lifecycle
+# CREATE
+## Docker CREATE: [DOCKER-IMAGE] ---CREATE---> [DOCKER-CONTAINER]
+> docker create [OPTIONS] IMAGE COMMAND [ARGS]
+## This command is applied on docker images. docker images are stacked sequence of read-only
+## file system layers. This command appends a writable layer on top of them and size of the 
+## writable layer depends on the resource limit set for the container. It can make adjustments
+## to pulled docker image layers. 
+> docker create -it \
+	--name ubuntu-create \
+	--cpus="0.5" \
+	--cap-add=ALL \
+	--env "LOGNAME=Shoaib Soomro" \
+	--memory=400M \
+	--memory-reservation=200M \
+	--pid=host \
+	--privileged \
+	--restart=always \
+	ubuntu:18.04
+## Docker process is created 
+> docker ps -a 
+
+# START 
+## Docker CREATE: [CONTAINER-CREATED] ---START---> [CONTAINER-RUNNNIG]
+> docker start [OPTIONS] CONTAINER
+> docker start ubuntu-create
+
+# RUN
+## Docker RUN: [DOCKER-IMAGE] ---RUN---> [CONTAINER-RUNNNIG] 
+## Both of the stages can be combined into one command > docker RUN
+> docker run -it \
+	--name ubuntu-run \
+	--cpus="0.5" \
+	--cap-add=ALL \
+	--env "LOGNAME=Shoaib Soomro" \
+	--memory=400M \
+	--memory-reservation=200M \
+	--pid=host \
+	--privileged \
+	--restart=always \
+	ubuntu:18.04
+
+# PAUSE
+## Docker PAUSE: [CONTAINER-RUNNNIG] ---PAUSE---> [CONTAINER-PAUSED]
+> docker pause [OPTIONS] CONTAINER
+> docker pause ubuntu-run
+## Containers use C-GROUP. When we pause container it put SIGSTOP signal on them until we un-pause
+## them. The container process doesnot exit it stays entier time and C-GROUP is still active and
+## resources are not freedup. It is just a temporary frozen state.
+> docker unpause [OPTIONS] CONTAINER
+> docker unpause ubuntu-run
+
+# STOP
+## Docker STOP: [CONTAINER-RUNNNIG] ---STOP---> [CONTAINER-STOPPED]
+> docker stop [OPTIONS] CONTAINER
+## In this phase the init or first process of the container recevies a termination signal SIGTERM
+## from parent process of the host.
+## The only significant flag this command have is -t which is --time. The grace period before
+## sending SIGKILL
+
+# KILL 
+## Docker STOP: [CONTAINER-RUNNNIG] ---KILL---> [NO-CONTAINER]
+> docker kill [OPTIONS] CONTAINER
+## Instead of waiting for a grace period like docker stop, this commands directly send SIGKILL
+## and kills the container by OOM i.e. Out Of Memory error.
+> docker kill --signal SIGQUIT CONTAINER ...
+## This changes the signal for killing the container from SIGKILL to SIGQUIT or SIGHUP
+## (signal hangup)
+
+# RENAME
+> docker rename <container_old_name> <container_new_name>
+> docker rename ubuntu-run ubuntu-dev
+## Once the docker name is overwritten it cannot be referenced using the old name.
+
+# ATTACH
+## This command is use to attach the host STDIN, STDOUT and STDERROR to the container and interact
+## with it. It brings the CMD or ENTRYPOINT of container to the foregroud of your host. Since
+## the shell process is in the foreground exiting it will result in termination of container as 
+## without any executable process. The container will automatically assume SIGTERM 	for its PID 1.
+## As soon you exit from the shell the container gets terminated and restart.
+## A simple way is to run the container with deamon -d and interactive -it flags.
+## This way even when you exit the shell the contaier will run in the background.
+> docker attach [OPTIONS] <conatiner-name/ID>
+
+## EXEC
+## Execute the commands on the running container. Only single command is allowed. Piping and 
+## multiple commands combined with logical 'and' && operator will not work.
+## this will not work docker exec [OPTIONS] <conatiner> <command>, <command>
+## Althoug can pass multiple arguments to the main command which could lead to the nesting
+## of one command to the other.
+## docker exec [OPTIONS] <conatiner> <command ARG1, ARG2, ARG3 ....>
+## other way is opening a exec shell and do the job.
+## The commands run in the PWD defined by the WORKDIR of a container.
+## The exec commands work on the running container only.
+> docker exec [OPTIONS] <conatiner> <command>
+> docker exec ubuntu-dev touch /tmp/readme.txt
+> docker attach ubuntu-dev
+
+# COMMIT
+## The docker push, pull, load and save methods are use to share built images. This is usefull for 
+## migrating live container from one infrastructure to another.
+## This command is used to store any changes made to the container inform of a new docker image.
+## The currently running container snapshot is exported as an image and the image than run as 
+## a container. 
+## commiting the container will append the current writable layer to the read-only layer and
+## stack it on top of other layers to create new image.
+> docker commit [OPTIONS] <container> <image:tag>
+> docker commit --author="Shoaib Soomro" ubuntu-dev ubuntu-dev:v1
+> docker run -itd --name ubuntu-commit ubuntu-dev:v1
+
+# Export - Import Method.
+## Similar to commit except instead of turning running container into an image it saves the
+## file system of the container i.e all of its files in its namespace with there folder arrangements
+## in that. The file system is turned into a tarball with the EXPORT command. And can be imported
+## as an image on any host. 
+> docker export --output="ubuntu-18.04-v1.tar" ubuntu-commit
+## docker import [OPTIONS] file|URL|- <image>:<tag> 
+> docker import \
+ --message "This is an imported container FS." \
+ --change "CMD bash" \
+ ubuntu-18.04-v1.tar \
+ ubuntu-import:v1
+
+# STATS
+> docker stats
+> docker stats ubuntu-dev
+> docker exec -it ubuntu-dev bash
+> docker stats --no-stream --all
+
+# TOP 
+## Processes running inside the containers.
+> docker top <container> 
+> docker top ubuntu-dev
+
+# DIFF
+## It provides a change log of the filesystem since we ran the container. 
+> docker diff ubuntu-dev
+
+# WAIT
+## It is use to block the container and print the exit code when it stops. It wraps a
+## tiny process around the container that catches the exit code when the container is stopped or
+## killed.
+> docker wait <container> 
+> docker wait ubuntu-dev
+> 137 (oom out of memory error)
+> docker stop ubuntu-dev
+
+# Sharing files with containers
+## Provisions a REST interface for sharing files from host to containers and vise-versa
+## when src and dest is a file it is copy and replce operation on files. 
+## But dest can also be directory. Then file will simply be added in the dest. directory.
+## If dest directory does exist the docker deamon will throw error.
+## If the source is directory and destination can be exiting or new directory. which will
+## result in simple copy operation. Non existing path will be created.
+## If src directory is like Directory/. The entire content of destination directory is replaced.
+
+> docker cp [OPTIONS] CONTAINER:SRC_PATH DEST_PATH
+> docker cp [OPTIONS] SRC_PATH CONTAINER:DEST_PATH
+> mkdir apache-server && cd apache-server
+> nano index.html
+> docker run -d --name apache-server -p 8080:80 httpd
+> docker cp /home/shoaib_soomro/apache-server/index.html \
+	apache-server:/usr/local/apache2/htdocs/index.html
+> Successfully copied 2.048kB to apache-server:/usr/local/apache2/htdocs/index.html
+
+# INSPECT
+> docker inspect apache-server
+> docker inspect --format='{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' apache-server
+
+# LOGS
+## Docker is equiped with a deamon called logging agent or logging driver. The logging agent
+## are responsible for collecting, managing, sorting and streaming the logs of a process as per
+## the user requirement.
+## By default, Docker uses json-file logging driver which collects logs in JSON format internally.
+## Also logs can be streamed as they get generated.
+> docker logs --follow CONTAINER
+## Also can limit the number of logs to be displayed by using the tail flag. 
+> docker logs --tail 5 CONTAINER
+## Also third-party logging drivers can be plugged in and used. These are available in docker reg.
+
+# CONTAINER CLEANUP
+> docker rm [OPTIONS] container/<ID>
+## Running container cannot be removed. Or can use force flag to remove it.
+> docker rm apache-server --force
+## The stopped container have still occupied there resources thats why they are called zombie 
+## containers or dangling containers.
+## All such can be removed by docker container prune command. 
+> docker container prune
+> docker rm $(docker ps -a -q) --force
+
+# CONTAINER NETWORKING MODEL
+## Since the containers are virtualized objects than networking components are also 
+## software objects. Defined to emulate the behaviour of there hardware counterparts. 
+## One such object in linux network stack is linux bridge.
+## Linux Bridge
+ -- Emulates the funtionality of network switch. Docker creates a network bridge called 
+ network0 i.e. network-zero
+ -- While the pysical switches work around MAC addresses, docker0 uses ipaddresses to identify 
+ connections.
+ -- It is created by docker deamon when we start the docker service. 
+ -- In ifconfig output ens4 veth or virtual ethernet adapter. It is used as a logical wire
+ between two namespaces.
+ -- Generally one end of veth is connected to the container while the other end is connected 
+ to the container networking object.
+ -- We beging with host network infrastructure. This includes both software and hardware details
+ like using ethernet or wifi. And host OS kernel network stack, which in linux case is bridges,
+ virtual ethernet, firewall rules and so on.
+ -- On top of them we have docker networking drivers and IPAM drivers. 
+ -- The network drivers provide an interface or an API interface. To enable and configure 
+ netowkring on the host. 
+ -- While the IPAM (IP Address driver Manager) provid private IP and subnet ranges to containers
+ and container networks.
+ -- The docker networks are created by docker so they sit on top of it and the containers can 
+ connect or disconnect them via a virutal ethernet adapter (i.e. veth) endpoints.
+ -- You can have native networks or IPAM drivers shipped with docker or you can install 
+ remote dirvers for specific networking requirements.<img:docker-container-networks_4.jpg>
+ -- One container can be connected to one or more networks. And for each connection it will have 
+ a dedicated endpoint and a dedicated IP.
+ -- Users can isolate the containers by connecting to "none" network.
+ 
+# Type of Docker Networks
+## <img:docker-container-networks_5.jpg>
+## Containers use Control Groups (CGroup) and namespaces of their own.
+## Similarly Docker Networks also have their CGroups and namespaces to isolate configuration files
+## of virtual networking objects of similar nature.
+## The container are not created inside the network namespace. Some resources of the containers
+## are rather controlled by the network CGroup. 
+## The containers own CGroup handles computational resource management. Whereas Docker Network
+## CGroup takes care of the connectivity part.
+## This way the container are connected to a docker network instead of being created within one.
+## This plugin/plugout funtionality allows flexibility to the containers w.r.t their network 
+## exposure. <img:docker-container-networks_6.jpg>
+## Native Network Drivers that are use to create such networks:
+## Host Network : <img:docker-container-networks_7.jpg>
+## Network credentials of the host are directly reflected on the container endpoint. Which means
+## containers connected to this network will have the same IP as the host itself. 
+## Docker just exposes the container to host network stack. No namespace or configuration is done.
+## This feature is only available on linux and is not recommended as it almost kill the purpose
+## of containerization or virtualization in first place. 
+## Bridge Network : <img:docker-container-networks_8.jpg>
+## It is default network for the docker containers.
+## It creates a virtual ethernet (veth) bridge like docker0.
+## All of the containers connected to this network are connected to this bridge via container 
+## endpoints.
+## The bridge communicates to the host network. It means the containers will be isolated from
+## the host network specifications.
+## So the containers will have different IPs than the host.
+## We can define he IP Range and Subnetmask for the bridge and subsequent networks by default
+## IPAM drivers manage this task on automatically.
+## Macvlan Network : <img:docker-container-networks_9.jpg>
+## Some legacy applications are not compatible latest networking infrastructure of docker hosts.
+## And therefour they need to bypass there notworking stack and use the pysical network directly.
+## For such specific usecases we have Macvlan networks. They provide MAC addresses instead of 
+## IP addresses to the containers making them appear like physical network devices. 
+## Overlay Network : <img:docker-container-networks_10.jpg>
+## Multiple hosts having multiple conainers where any combination of the communication might be
+## necessary.
+## So, while establishing or performing the container to container communication our network driver
+## can't work just by keeping track of the containers IP. It also need to route its communication 
+## to the proper hosts. 
+## To solve this issue, The overlay networks have two layers of information. 
+## Underlay Network, <img:docker-container-networks_11.jpg>
+## which will contain the data regarding the sources and destination of host IP and
+## Overlay Network, <img:docker-container-networks_12.jpg>
+## which will contain data about source and destination of containers IP.
+## Just like bridge network, docker also creates a default overlay network called ingress.
+## <img:docker-container-networks_13.jpg>
+## Apart from these four drivers, there are also remote third party network drivers like contiv,
+## weave-net, calico or KURYR <img:docker-container-networks_14.jpg>
+## Similary, there are remote IPAM network drivers. <img:docker-container-networks_15.jpg>
+## like libnetwork and infoblox <img:docker-container-networks_16.jpg>
+
+> docker network ls 
+> docker run -d --name busybox-1 busybox
+NETWORK ID     NAME      DRIVER    SCOPE
+ac44ed567afe   bridge    bridge    local
+084f2263ea91   host      host      local
+197a07452cd5   none      null      local
+> docker inspect busybox-1
+"Networks": {
+     "bridge": {
+         "IPAMConfig": null,
+         "Links": null,
+         "Aliases": null,
+         "NetworkID": "ac44ed567afe709ec2c4f90fad2a8da14bf7bc408304adbd5bca5a42ca0a654f",
+         "EndpointID": "",
+         "Gateway": "",
+         "IPAddress": "",
+         "IPPrefixLen": 0,
+         "IPv6Gateway": "",
+         "GlobalIPv6Address": "",
+         "GlobalIPv6PrefixLen": 0,
+         "MacAddress": "",
+         "DriverOpts": null
+    }
+}
+## container are virtualization version of computers they can be connected to more than one networ
+## at same time. For now this container is connected to one network called bridge.
+## To inspect the networ directly 
+> docker network inspect bridge
+## "Scope": "local", this means the network is irrelevant anywhere except this host.
+## "Driver": "bridge",
+## IPAM setting
+##  "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "172.17.0.0/16"
+                }
+            ]
+        },
+## "Internal": false, Internal networks are used only when we don't want the container to 
+## communicate with outside network for security purpose. Or if the host have a rotating IP.
+## In case of operating cluster of docker hosts the internal network can be used to avoid
+## containers getting connected to bridge since they wil be handled by other networks managing
+## the enitre cluster. 
+## "Ingress": false, not controlled by an external ingress controller, like nginx. Ingress 
+## controller are used for tighter traffic management and load balancing.
+## "ConfigOnly": false, This network is not exlcusive for docker internal service, 
+## thus the ConfigOnly field has the value false. The output also mentions the list of containers
+## connected to the network. right now only "ubuntu-dev" container is connected to it.
+"ConfigOnly": false,
+"Containers": {
+    "88e0b087cbb7d19ca3ba188e13fb0a622c626224b01c42aa8f34d73401a6c182": {
+        "Name": "ubuntu-dev",
+        "EndpointID": "16718cf261c5783dfb0bcaf8cb27e964cf3704bfb5ff863f2aef0a1d24d0dfbf",
+        "MacAddress": "02:42:ac:11:00:02",
+        "IPv4Address": "172.17.0.2/16",
+        "IPv6Address": ""
+    }
+},
+## Last is network Options, the containers connected to this network are not bound by any specific
+## IP. The IPs are allocated simply based on the available subnet ip range of the network.
+## enable_ip_masquerade": "true",
+## IP Address Masqurading is enabled and containers are isolated by ICC.
+## enable_icc": "true",
+## ICC is similar to IPC. It stands for Inter Container Communication. Having it activated blocks
+## the container process connected to the same network from communicating using anything but there
+## IPs. This way client cannot exploit the containers connected to the same network by using lower
+## layer IPC methods like piping.
+## default_bridge": "true", option of setting network default is set to true.
+"Options": {
+    "com.docker.network.bridge.default_bridge": "true",
+    "com.docker.network.bridge.enable_icc": "true",
+    "com.docker.network.bridge.enable_ip_masquerade": "true",
+    "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+    "com.docker.network.bridge.name": "docker0",
+    "com.docker.network.driver.mtu": "1500"
+},
+
+# User Defined Bridge Networks:
+> docker network create [OPTIONS] NETWORK_NAME
+> docker network create --driver bridge my-bridge
+> docker network inspect my-bridge
+## All of the options fileds are not filled as per any template.
+[
+    {
+        "Name": "my-bridge",
+        "Id": "84be947658e787a115db93f6fcadf30186efd5bc600d9b5458af2719da055e76",
+        "Created": "2023-02-12T19:52:01.876771837Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+
+> docker network create --driver bridge \
+  --subnet=172.30.0.0/16 \
+  --ip-range=172.30.1.0/24 \
+  --gateway=172.30.1.254 \
+  --label=trial-bridge \
+  --opt com.docker.network.driver.mtu=9000 \
+  your-bridge
+> docker run -id --name busybox-2 --network your-bridge busybox
+> docker inspect busybox-2
+"Networks": {
+     "your-bridge": {
+         "IPAMConfig": null,
+         "Links": null,
+         "Aliases": [
+             "874c0c7c353f"
+         ],
+         "NetworkID": "4ac0ca947251eaa81ab96a6e0ab77d3b13b6ea06f208541c41e7a7dec31b58eb",
+         "EndpointID": "baf35cfc689b11390f78717557b14405735badc7bbe10f0c8cd5bba1695b2879",
+         "Gateway": "172.30.1.254",
+         "IPAddress": "172.30.1.0",
+         "IPPrefixLen": 16,
+         "IPv6Gateway": "",
+         "GlobalIPv6Address": "",
+         "GlobalIPv6PrefixLen": 0,
+         "MacAddress": "02:42:ac:1e:01:00",
+         "DriverOpts": null
+     }
+}
+
+# Connecting a Running Container to User defined network
+> docker network create [OPTIONS] NETWORK_NAME
+> docker network create --driver bridge my-bridge
+> docker network create --driver bridge \
+ --subnet=172.30.0.0/16 \
+ --ip-range=172.30.1.0/24 \
+ --gateway=172.30.1.254 \ 
+ --label=trail-bridge \						  # label for meta
+ --opt com.docker.network.driver.mtu=9000 \   # This is max packet size. 
+ your-bridge
+## generally packet size is set to 1500 bcs this is what docker0 virtual ethernet veth supports.
+
+## Create a new container and assign it to network.
+> docker run -id --name busybox-2 --network your-bridge busybox
+> docker inspect busybox-2
+## Assign running container to a network.
+> docker network connect NETWORK CONTAINER
+## It can have as many containers as required. And all of them will be connected to the network
+## mentioned in parameter.
+## For connecting multiple containers.
+> docker network connect NETWORK $(docker ps -a -q)
+> docker inspect busybox-1
+## This is connected to two different networks. the default bridge and 'your-bridge'.
+## It has received different IPs and Endpoints from both networks according to their respective
+## subnet ranges.
+## In case of 'your-bridge', since the gateway is already set to .254,  The IP of the container
+## connected to it was bound to have a number lower than 254 to maintain allocated 255 IP range
+## limit.
+## The MacAddress are different bcs each endpoint is considered separate virtual networking 
+## device connected to different network.
+## Infact can ping this container on both IPs from the host. Since it is connected to the 
+## networks created from the same driver, the bridge driver, 
+Networks": {
+    "bridge": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": null,
+        "NetworkID": "ac44ed567afe709ec2c4f90fad2a8da14bf7bc408304adbd5bca5a42ca0a654f",
+        "EndpointID": "635a1f2968336184ba7298758ee3eadd24aad5acf9cd3c990c080253c0f50598",
+        "Gateway": "172.17.0.1",
+        "IPAddress": "172.17.0.3",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "MacAddress": "02:42:ac:11:00:03",
+        "DriverOpts": null
+    },
+    "your-bridge": {
+        "IPAMConfig": {},
+        "Links": null,
+        "Aliases": [
+            "6232f48e1bc8"
+        ],
+        "NetworkID": "4ac0ca947251eaa81ab96a6e0ab77d3b13b6ea06f208541c41e7a7dec31b58eb",
+        "EndpointID": "d7a9c7d3d8395a64fe6df765574766eed7cc954f7063ab49c88158237e3c4d62",
+        "Gateway": "172.30.1.254",
+        "IPAddress": "172.30.1.1",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "MacAddress": "02:42:ac:1e:01:01",
+        "DriverOpts": {}
+}
+
+> docker network disconnect your-bridge busybox-1
+> docker network disconnect bridge busybox-3
+> Error response from daemon: container 6094b7b is not connected to network bridge
+> docker exec -it busybox-3 sh
+/ # ping busybox-2
+
+# Host Network:
+> docker run --name nginx-bridge -d -P -p 8080:80 nginx 
+> docker network disconnect bridge nginx-bridge
+> docker network connect host happy_visvesvaraya
+> Error response from daemon: container cannot be disconnected from host network 
+> or connected to host network
+## The container is already connected to one network and host is not a proper networking object.
+## Its more like a loose configuration that remove network namespace isolation between the 
+## container and the linux host. 
+## Host is a network driver just like bridge or overlay.
+## But the Host Network, is not a traditional network object. As it doesn't create any new 
+## network namespace. 
+## Since, the container will be directly linux host network stack, lack of network separation
+## violates the isolation policy of other network drivers. 
+## Hence, cannot get connect to HOST when it is already connected to some other network.
+> docker run -d --name nginx-host --network host nginx
+## Since, this container is directly connected to the host. The host IP traffic is now directly
+## mapped to the containers available ports.
+
+# Macvlan Networks:
+## docker0 is the virtual linux bridge which is used for switching and forwarding request and 
+## responses between containers connected to it and internet if the containers have been exposed.
+## ens4 is virtual ethernet adapter veth. It is used as a full duplex logical wire adapter between 
+## two namespaces. Generally one end of veth is connected to container while the other end is 
+## connected to container networking object.
+## The logic of veth self explains its relatively primitive nature in terms of networking progress.
+## Thus it is usefull for legacy app design to wire to simple network topology. 
+## The ens4 veth will act as a base of the macvlan network adapter.
+> ifconfig
+...
+> docker0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255
+        inet6 fe80::42:88ff:fe93:9b7c  prefixlen 64  scopeid 0x20<link>
+        ether 02:42:88:93:9b:7c  txqueuelen 0  (Ethernet)
+        RX packets 134316  bytes 9130400 (9.1 MB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 157041  bytes 1596238776 (1.5 GB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+> ens4: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1460
+        inet 10.182.0.2  netmask 255.255.255.255  broadcast 0.0.0.0
+        inet6 fe80::4001:aff:feb6:2  prefixlen 64  scopeid 0x20<link>
+        ether 42:01:0a:b6:00:02  txqueuelen 1000  (Ethernet)
+        RX packets 1677079  bytes 6006907446 (6.0 GB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1370155  bytes 231149084 (231.1 MB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+...
+## Specify the parent for macvlan network as ens4, which is physical interface of the Docker Host
+## for the network traffic.
+> docker network create --driver macvlan \
+   --subnet=172.16.0.0/24 \
+   --gateway=172.16.0.1 \
+   -o parent=ens4 \
+   my-macvlan
+> docker network inspect my-macvlan
+## The container also receives virtual mac address this time. This is provided by macvlan driver.
+## This way even the host and the container can talk to one another using this virtual 
+## macaddress as if they were different devices. Container can't communicate with the other 
+## containers connected with the host or bridge network.
+ 
+# None Network:
+## None is not a network object but an absence of a network.
+## To completely disable to networking stack on a container use the none value when starting
+## the container. 
+> docker run -id --name busybox-none --network none busybox
+## Cannot use none on an existing container bcs it will already be having a network stack on it.
+> docker network connect bridge busybox-none
+> Error response from daemon: container cannot be connected to multiple networks with one of 
+  the networks in private (none) mode
+## Such container cannot talk to anyone except docker deamon.
+
+# DNS:
+## etc/resolve.conf
+## Docker copies the resolve.conf from host /etc or from /run/system(d)/resolve to container 
+## and uses the same nameserver as the host. 
+## If we don't provide the customs DNS resolution file, Docker will just use the host machine 
+## configuration.
+## To verify do cat cat /run/systemd/resolve/resolv.conf
+> docker run --rm -d --name nginx-test nginx
+> docker exec nginx-test cat /etc/resolv.conf
+> docker run -d --rm --name nginx-dns -P --dns 1.1.1.1 nginx
+> docker exec nginx-dns cat /etc/resolv.conf
+
+# STORAGE
+## To use the host as a backup, docker uses objects created by native storage drivers 
+## provided by docker.
+## For e.g. Volumes, Volumes are the directories on the host filesystem outside the scope of 
+## container and its writeable layer.
+## They are storage sandboxes created on the filesystem of the host for the containers.
+## The nature of storage will follow the configuration of the host.
+## volumes can be located at /var/lib/docker/volumes
+## Docker never modifies the original pulled image.
+## It uses approach called Copy on Write, means keeping the original files intact and making 
+## changes on a copy 
+## When the changes are commited they are saved as a new image.
+> docker volume ls 
+DRIVER    VOLUME NAME
+local     4b0740a6b09f654c515b428878ef4b344d28da39a7d6db3905a3247fd5be4edb
+local     44801a586a4b58219682772f15f6ee397703532d4431a5dc39e554432734a359
+## the DRIVER value local means, volumes are on the same host that runs the container.
+## These volumes are directory on host machine, /var/lib/docker/volumes.
+> cd /var/lib/docker/volumes
+> docker volume create --name <volume_name>
+> docker volume create --name vol-ubuntu
+> docker volume inspect  vol-ubuntu
+> "Mountpoint": "/var/lib/docker/volumes/vol-ubuntu/_data",
+> docker run --rm -itd --name alpha-ubuntu -v vol-ubuntu:/etc ubuntu:latest
+> cd /var/lib/docker/volumes/vol-ubuntu/_data
+/var/lib/docker/volumes/vol-ubuntu/_data> touch temp.conf
+> docker exec -it alpha-ubuntu bash
+> ls /etc/
+> docker run -itd --name alpha-centos \
+  --mount source=vol-centos,destination=/etc,readonly \ 
+  centos:latest
+## --mount source=<volume>, target=<container_dir>, property
+
+# PLUGIN
+> docker plugin install tiborvass/sample-volume-plugin
+> docker volume create --driver tiborvass/sample-volume-plugin --name vol-plug-busybox
+> docker run -itd --name alpha-busybox \
+  --mount type=volume,volume-driver=tiborvass/sample-volume-plugin,source=vol-plug-busybox,
+  destination=/tmp \
+  busybox
+> docker exec -it alpha-busybox sh
+> echo "This is busybox....." > /tmp/foo.txt
+> ls /tmp
+> foo.txt
+> exit
+## --volume-from CONTAINER_NAME/ID
+> docker run -itd --name beta-busybox --volumes-from alpha-busybox:ro busybox
+## ro is for read-only.
+> docker inspect beta-busybox
+## "RW": false, means read-only.
+"Mounts": [
+    {
+        "Type": "volume",
+        "Name": "vol-plug-busybox",
+        "Source": "/data/vol-plug-busybox",
+        "Destination": "/tmp",
+        "Driver": "tiborvass/sample-volume-plugin:latest",
+        "Mode": "",
+        "RW": false,
+        "Propagation": ""
+    }
+],
+> docker volume rm vol-plug-busybox
+> docker volume rm vol-plug-busybox --force
+> Error response from daemon: remove vol-plug-busybox: volume is in use - [733a.., bde00...]
+> docker rm 733aa5a6 bde009a6fb5f31c5cca --force
+> docker volume rm vol-plug-busybox
+> docker volume prune
+
+# BIND MOUNT
+## use to mount any path on host to any path in the container.
+> docker run -itd --name bind-nginx -P -v /home/shoaib_soomro/bind-nginx:/tmp nginx
+> docker inspect bind-nginx
+"Mounts": [
+    {
+        "Type": "bind",
+        "Source": "/home/shoaib_soomro/bind-nginx",
+        "Destination": "/tmp",
+        "Mode": "",
+        "RW": true,
+        "Propagation": "rprivate"
+    }
+],
