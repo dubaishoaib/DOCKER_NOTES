@@ -1,13 +1,3 @@
-<style>
-  body {
-    background-color: #1E1E1E;
-    color: #F8F8F2;
-  }
-  a {
-    color: #50FA7B;
-  }
-</style>
-
 # How To Remove Docker Images, Containers, and Volumes
 -------------------------------------------------------
 
